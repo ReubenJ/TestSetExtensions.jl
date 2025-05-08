@@ -15,6 +15,27 @@ end
     global output
     output = @capture_out begin
         try
+            @testset ExtendedTestSet "vectors with a type prefix" begin
+                # General case vectors that are not of eltype Float64, Int, Char, String, or Symbol.
+                # These display their type as a prefix to the vector like: `Bool[1, 1]`.
+                # See: https://github.com/JuliaLang/julia/blob/9b63fd91b8ca5ff0c96ee99782a7c1a0fd448987/base/arrayshow.jl#L556-L565
+
+                # The `Test.record(::ExtendedTestSet, ::Fail)` method `Meta.parse`s the
+                # string of the expression passed to `@test` (in this case "Bool[1, 1] == Bool[1, 0]")
+                # and this is parsed as a :ref Expr instead of a :vect Expr so its necessary to test
+                # that both cases get nice diffs. Previously the :ref case was ignored and had no diffs.
+                @test [true, true] == [true, false]
+            end
+        catch
+        end
+    end
+end
+@test contains(output, "Diff:\n[(-)1, 1, (+)0]")
+
+@testset EncasedTestSet "wrapper" begin
+    global output
+    output = @capture_out begin
+        try
             @testset ExtendedTestSet "strings" begin
                 @test """Lorem ipsum dolor sit amet,
                          consectetur adipiscing elit, sed do
